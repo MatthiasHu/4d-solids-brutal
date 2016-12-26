@@ -18,6 +18,13 @@ instance Applicative Vec4 where
   Vec4 f g h i <*> Vec4 x y z w = Vec4 (f x) (g y) (h z) (i w)
   
 
+fromList3d :: [a] -> Vec3 a
+fromList3d (x:y:z:_) = Vec3 x y z
+
+fromList4d :: [a] -> Vec4 a
+fromList4d (x:y:z:w:_) = Vec4 x y z w
+
+
 coord4dw :: Vec4 a -> a
 coord4dw (Vec4 x y z w) = w
 
