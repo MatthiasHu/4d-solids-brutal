@@ -47,7 +47,7 @@ norm3d :: (Floating a) => Vec3 a -> a
 norm3d v@(Vec3 x y z) = sqrt $ x^2 + y^2 + z^2
 
 normalize3d :: (Floating a) => Vec3 a -> Vec3 a
-normalize3d a = norm3d a `smult3d` a
+normalize3d a = fmap (/norm3d a) a
 
 cross :: (Num a) => Vec3 a -> Vec3 a -> Vec3 a
 cross (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) =
