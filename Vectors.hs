@@ -56,3 +56,11 @@ cross (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) =
 -- normal vector on a plane through three points
 planeNormal :: (Floating a) => Vec3 a -> Vec3 a -> Vec3 a -> Vec3 a
 planeNormal a b c = normalize3d $ liftA2 (-) b a `cross` liftA2 (-) c b
+
+rot3dxy :: (Floating a) => a -> Vec3 a -> Vec3 a
+rot3dxy a (Vec3 x y z) =
+  Vec3 (cos a * x + sin a * y) (-sin a * x + cos a * y) z
+
+rot3dxz :: (Floating a) => a -> Vec3 a -> Vec3 a
+rot3dxz a (Vec3 x y z) =
+  Vec3 (cos a * x + sin a * z) y (-sin a * x + cos a * z)
