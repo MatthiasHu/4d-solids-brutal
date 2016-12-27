@@ -10,6 +10,7 @@ import Vectors
 import VectorsToGL
 import Render
 import Construction
+import Intersect
 
 
 data State = State
@@ -68,8 +69,11 @@ display shaderLocs state = do
   clearColor $= Color4 0 0.2  0 0
   clear [ColorBuffer, DepthBuffer]
   renderSolid shaderLocs $
-    fmap (rot3dxz (angle state) . rot3dxy (0.3* angle state)) cube
+    fmap (rot3dxz (angle state) . rot3dxy (0.3* angle state)) $
+    myCube
   flush
+
+myCube = intersectXYZ hypercube
 
 vertexAttrib3' :: AttribLocation -> Vec3 GLfloat -> IO ()
 vertexAttrib3' loc (Vec3 x y z) = vertexAttrib3 loc x y z
