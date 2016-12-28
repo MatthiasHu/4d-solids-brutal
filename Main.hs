@@ -68,9 +68,11 @@ display :: ShaderLocations -> State -> IO ()
 display shaderLocs state = do
   clearColor $= Color4 0 0.2  0 0
   clear [ColorBuffer, DepthBuffer]
+  let a = angle state
+      tau = 2*pi
   renderSolid shaderLocs $
-    fmap (rot3dxz (angle state) . rot3dxy (0.3* angle state)) $
-    myCube
+    fmap (rot3dxz (tau/7) . rot3dxy (tau/9)) $
+    intersectXYZ $ fmap (rot4dyw (a*3) . rot4dxy (a*0.2)) hypercube
   flush
 
 myCube = intersectXYZ hypercube
@@ -98,4 +100,4 @@ idle ref = do
   postRedisplay Nothing
 
 step :: State -> State
-step s = State (angle s + 0.02)
+step s = State (angle s + 0.05)
