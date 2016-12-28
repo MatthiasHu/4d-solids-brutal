@@ -78,3 +78,7 @@ rot4dyw a (Vec4 x y z w) = Vec4 x y' z w'
 rot4dxy :: (Floating a) => a -> Vec4 a -> Vec4 a
 rot4dxy a (Vec4 x y z w) = Vec4 x' y' z w
   where (x', y') = rot a (x, y)
+
+rot4dzw :: (Floating a) => a -> Vec4 a -> Vec4 a
+rot4dzw a (Vec4 x y z w) = Vec4 x y z' w'
+  where (z', w') = rot a (z, w)
