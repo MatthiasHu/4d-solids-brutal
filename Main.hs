@@ -93,7 +93,7 @@ renderSolid shaderLocs solid = renderPrimitive Triangles $
 
 idle :: IORef State -> IO ()
 idle ref = do
-  threadDelay 100000
+  threadDelay 500000
   st <- get ref
   ref $= step st
   threadDelay $ 10^4
@@ -101,4 +101,4 @@ idle ref = do
   postRedisplay Nothing
 
 step :: State -> State
-step s = State (angle s + 0.05)
+step s = State (angle s + 0.10)
