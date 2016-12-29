@@ -71,13 +71,21 @@ rot3dxz :: (Floating a) => a -> Vec3 a -> Vec3 a
 rot3dxz a (Vec3 x y z) = Vec3 x' y z'
   where (x', z') = rot a (x, z)
 
-rot4dyw :: (Floating a) => a -> Vec4 a -> Vec4 a
-rot4dyw a (Vec4 x y z w) = Vec4 x y' z w'
-  where (y', w') = rot a (y, w)
-
 rot4dxy :: (Floating a) => a -> Vec4 a -> Vec4 a
 rot4dxy a (Vec4 x y z w) = Vec4 x' y' z w
   where (x', y') = rot a (x, y)
+
+rot3dyz :: (Floating a) => a -> Vec3 a -> Vec3 a
+rot3dyz a (Vec3 x y z) = Vec3 x y' z'
+  where (y', z') = rot a (y, z)
+
+rot4dxw :: (Floating a) => a -> Vec4 a -> Vec4 a
+rot4dxw a (Vec4 x y z w) = Vec4 x' y z w'
+  where (x', w') = rot a (x, w)
+
+rot4dyw :: (Floating a) => a -> Vec4 a -> Vec4 a
+rot4dyw a (Vec4 x y z w) = Vec4 x y' z w'
+  where (y', w') = rot a (y, w)
 
 rot4dzw :: (Floating a) => a -> Vec4 a -> Vec4 a
 rot4dzw a (Vec4 x y z w) = Vec4 x y z' w'
