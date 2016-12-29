@@ -73,6 +73,7 @@ display shaderLocs state = do
   renderSolid shaderLocs
     . fmap (rot3dxz (tau/7) . rot3dxy (tau/9))
     . intersectXYZ
+    . fmap (plus4d $ Vec4 0 0 0 (sqrt 3 * sin (a*0.76842)))
     . fmap (rot4dyw (a*3) . rot4dxy (a*0.2) . rot4dzw (a*2.2))
     $ hypercube
   flush
@@ -95,6 +96,7 @@ renderSolid shaderLocs solid = renderPrimitive Triangles $
 
 idle :: IORef State -> IO ()
 idle ref = do
+  threadDelay 30000
   st <- get ref
   ref $= step st
   threadDelay $ 10^4
