@@ -11,14 +11,19 @@ import VectorsToGL
 import Render
 import Intersect
 import Animation
+import Construction
 
 
 data State = State
-  { angle :: GLfloat
+  { time :: GLfloat
+  , angleXZ :: GLfloat
+  , angleYZ :: GLfloat
   }
 
 initialState = State
-  { angle = 0
+  { time = 0
+  , angleXZ = tau/9
+  , angleYZ = tau/7
   }
 
 data ShaderLocations = ShaderLocations
@@ -31,6 +36,7 @@ main = do
   stateRef <- newIORef initialState
   displayCallback       $= (get stateRef >>= display shaderLocations)
   idleCallback          $= Just (idle stateRef)
+  keyboardCallback      $= Just (keyboardInput stateRef)
   mainLoop
 
 
@@ -66,15 +72,25 @@ setupShaderProgram vertSource fragSource = do
   attLocNormal <- get $ attribLocation prog "aNormal"
   return (prog, attLocNormal)
 
+keyboardInput :: IORef State -> KeyboardCallback
+keyboardInput ref c _ = modifyState ref $ keyboard c
+
+keyboard :: Char -> State -> State
+keyboard ' ' s  = s {angleXZ = angleXZ s + 0.5}
+keyboard _ s    = s
+
+modifyState :: IORef State -> (State -> State) -> IO ()
+modifyState ref f = modifyIORef ref f >> postRedisplay Nothing
+
 display :: ShaderLocations -> State -> IO ()
-display shaderLocs state = do
+display shaderLocs s = do
   clearColor $= Color4 0 0.2  0 0
   clear [ColorBuffer, DepthBuffer]
-  -- change solid and animation here
   renderSolid shaderLocs
-    . fmap (rot3dyz (tau/9) . rot3dxz (tau/7))
-    . intersectXYZ
-    $ animation (angle state)
+    . fmap (rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
+    $ cube
+--    . intersectXYZ
+--    $ animation (angle state)
   flush
 
 vertexAttrib3' :: AttribLocation -> Vec3 GLfloat -> IO ()
@@ -82,7 +98,7 @@ vertexAttrib3' loc (Vec3 x y z) = vertexAttrib3 loc x y z
 
 renderSolid :: ShaderLocations -> Solid (Vec3 GLfloat) -> IO ()
 renderSolid shaderLocs solid = renderPrimitive Triangles $
-  mapM_ renderTriangle $ allTriangles solid
+  mapM_ renderTriangle $ boundingTriangles solid
   where
     renderTriangle :: (Vec3 GLfloat, Vec3 GLfloat, Vec3 GLfloat) -> IO ()
     renderTriangle (a, b, c) = do
@@ -93,12 +109,8 @@ renderSolid shaderLocs solid = renderPrimitive Triangles $
 
 idle :: IORef State -> IO ()
 idle ref = do
-  threadDelay 100000
-  st <- get ref
-  ref $= step st
-  threadDelay $ 10^4
---  putStrLn "Yo"
-  postRedisplay Nothing
+  threadDelay 1000000
+  modifyState ref step
 
 step :: State -> State
-step s = State (angle s + 0.05)
+step s = s {time = time s + 0.05}
