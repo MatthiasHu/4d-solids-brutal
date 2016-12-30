@@ -4,6 +4,7 @@ import Data.IORef
 import Control.Concurrent (threadDelay)
 import Control.Monad
 import qualified Data.ByteString as BS
+import Debug.Trace
 
 import Solids
 import Vectors
@@ -18,12 +19,14 @@ data State = State
   { time :: GLfloat
   , angleXZ :: GLfloat
   , angleYZ :: GLfloat
+  , solids :: [[(Vec3 GLfloat, Vec3 GLfloat, Vec3 GLfloat)]]
   }
 
 initialState = State
   { time = 0
   , angleXZ = tau/9
   , angleYZ = tau/7
+  , solids = boundingTrianglesSequence $ intersectXYZ hypercube
   }
 
 data ShaderLocations = ShaderLocations
@@ -76,7 +79,9 @@ keyboardInput :: IORef State -> KeyboardCallback
 keyboardInput ref c _ = modifyState ref $ keyboard c
 
 keyboard :: Char -> State -> State
-keyboard ' ' s  = s {angleXZ = angleXZ s + 0.5}
+keyboard ' ' s  = s {solids = tail (solids s)}
+keyboard 'h' s  = s {angleXZ = angleXZ s +0.1}
+keyboard 'l' s  = s {angleXZ = angleXZ s -0.1}
 keyboard _ s    = s
 
 modifyState :: IORef State -> (State -> State) -> IO ()
@@ -86,19 +91,31 @@ display :: ShaderLocations -> State -> IO ()
 display shaderLocs s = do
   clearColor $= Color4 0 0.2  0 0
   clear [ColorBuffer, DepthBuffer]
-  renderSolid shaderLocs
-    . fmap (rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
-    $ cube
+  renderTriangles shaderLocs
+    . map (mapTriangle $ rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
+    $ head (solids s)
+--  renderSolid shaderLocs
+--    . fmap (rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
+--    $ cube
 --    . intersectXYZ
 --    $ animation (angle state)
   flush
+
+mapTriangle :: (a -> b) -> (a, a, a) -> (b, b, b)
+mapTriangle f (x, y, z) = (f x, f y, f z)
 
 vertexAttrib3' :: AttribLocation -> Vec3 GLfloat -> IO ()
 vertexAttrib3' loc (Vec3 x y z) = vertexAttrib3 loc x y z
 
 renderSolid :: ShaderLocations -> Solid (Vec3 GLfloat) -> IO ()
-renderSolid shaderLocs solid = renderPrimitive Triangles $
-  mapM_ renderTriangle $ boundingTriangles solid
+renderSolid shaderLocs =
+  renderTriangles shaderLocs . boundingTriangles
+
+renderTriangles :: ShaderLocations ->
+  [(Vec3 GLfloat, Vec3 GLfloat, Vec3 GLfloat)] -> IO ()
+renderTriangles shaderLocs tris =
+  (trace $ "rendering " ++ show (length tris) ++ "triangles")
+  . renderPrimitive Triangles . mapM_ renderTriangle $ tris
   where
     renderTriangle :: (Vec3 GLfloat, Vec3 GLfloat, Vec3 GLfloat) -> IO ()
     renderTriangle (a, b, c) = do
@@ -109,7 +126,7 @@ renderSolid shaderLocs solid = renderPrimitive Triangles $
 
 idle :: IORef State -> IO ()
 idle ref = do
-  threadDelay 1000000
+  threadDelay 100000
   modifyState ref step
 
 step :: State -> State

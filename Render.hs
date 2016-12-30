@@ -6,6 +6,7 @@ import qualified Data.IntSet as ISet
 import qualified Data.Set as Set
 import qualified Data.IntMap as IMap
 import qualified Data.Map.Strict as Map
+import Data.List (mapAccumL)
 
 import Solids
 import Vectors
@@ -28,7 +29,16 @@ choose' n (x:xs) =
 
 boundingTriangles :: forall a. (Floating a, Ord a) =>
   Solid (Vec3 a) -> [(Vec3 a, Vec3 a, Vec3 a)]
-boundingTriangles = boundingTriangles' mkPlane planeTest
+boundingTriangles = last . boundingTrianglesSequence
+
+boundingTrianglesSequence :: forall a. (Floating a, Ord a) =>
+  Solid (Vec3 a) -> [[(Vec3 a, Vec3 a, Vec3 a)]]
+boundingTrianglesSequence =
+  map extractTriangles . esSequence
+
+esSequence :: forall a. (Floating a, Ord a) =>
+  Solid (Vec3 a) -> [ElaborateSolid (Vec3 a) (Vec3 a, a)]
+esSequence = esSequence' mkPlane planeTest
   where
     mkPlane (a, b, c) =
       let normal = planeNormal a b c
@@ -36,6 +46,31 @@ boundingTriangles = boundingTriangles' mkPlane planeTest
     planeTest :: (Vec3 a, a) -> Vec3 a -> Bool
     planeTest (normal, value) a = normal `dot3d` a <= value
 
+esSequence' :: ((p, p, p) -> plane) -> (plane -> p -> Bool)
+  -> Solid p -> [ElaborateSolid p plane]
+esSequence' mkPlane planeTest (Solid allPoints) =
+  myIterate
+    (addPoint mkPlane planeTest)
+    (initialES mkPlane planeTest a b c d)
+    ps
+  where
+    a:b:c:d:ps = allPoints
+    elaborateSolid = foldl
+      (addPoint mkPlane planeTest)
+      (initialES mkPlane planeTest a b c d)
+      ps
+
+myIterate :: (a -> b -> a) -> a -> [b] -> [a]
+myIterate f a [] = [a]
+myIterate f a (b:bs) = a : myIterate f (f a b) bs
+
+extractTriangles :: ElaborateSolid p plane -> [(p, p, p)]
+extractTriangles es =
+  map (toTriple . map (vertices es IMap.!) . faceIdToList)
+  . Map.keys . faces
+  $ es
+
+-- delete this?
 boundingTriangles' :: ((p, p, p) -> plane) -> (plane -> p -> Bool)
   -> Solid p -> [(p, p, p)]
 boundingTriangles' mkPlane planeTest (Solid allPoints) =
