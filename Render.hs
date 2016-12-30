@@ -8,6 +8,7 @@ import qualified Data.IntMap as IMap
 import qualified Data.Map.Strict as Map
 
 import Solids
+import Vectors
 
 
 allTriangles :: Solid p -> [(p, p, p)]
@@ -25,9 +26,19 @@ choose' n (x:xs) =
   ++ map (\(chosen, rest) -> (chosen, x:rest)) (choose' n xs)
 
 
-boundingTriangles :: ((p, p, p) -> plane) -> (plane -> p -> Bool)
+boundingTriangles :: forall a. (Floating a, Ord a) =>
+  Solid (Vec3 a) -> [(Vec3 a, Vec3 a, Vec3 a)]
+boundingTriangles = boundingTriangles' mkPlane planeTest
+  where
+    mkPlane (a, b, c) =
+      let normal = planeNormal a b c
+      in (normal, normal `dot3d` a)
+    planeTest :: (Vec3 a, a) -> Vec3 a -> Bool
+    planeTest (normal, value) a = normal `dot3d` a <= value
+
+boundingTriangles' :: ((p, p, p) -> plane) -> (plane -> p -> Bool)
   -> Solid p -> [(p, p, p)]
-boundingTriangles mkPlane planeTest (Solid allPoints) =
+boundingTriangles' mkPlane planeTest (Solid allPoints) =
   map (toTriple . map (vertices elaborateSolid IMap.!) . faceIdToList)
   . Map.keys . faces
   $ elaborateSolid
