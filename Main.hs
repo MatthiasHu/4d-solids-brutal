@@ -9,8 +9,8 @@ import Solids
 import Vectors
 import VectorsToGL
 import Render
-import Construction
 import Intersect
+import Animation
 
 
 data State = State
@@ -27,8 +27,6 @@ data ShaderLocations = ShaderLocations
 
 
 main = do
-  getArgsAndInitialize
-  createWindow "4d solids"
   shaderLocations <- glSetup
   stateRef <- newIORef initialState
   displayCallback       $= (get stateRef >>= display shaderLocations)
@@ -38,6 +36,10 @@ main = do
 
 glSetup :: IO ShaderLocations
 glSetup = do
+  getArgsAndInitialize
+  initialWindowSize $= Size 500 500
+  createWindow "4d solids"
+  windowPosition $= Position 0 0
   depthFunc $= Just Lequal
   vertShaderSource <- BS.readFile "vertshader.sl"
   fragShaderSource <- BS.readFile "fragshader.sl"
@@ -59,7 +61,7 @@ setupShaderProgram vertSource fragSource = do
   attachShader prog fragShader
   linkProgram prog
   log <- programInfoLog prog
-  putStrLn $ "Yo, " ++ log ++ ", alter!"
+  putStrLn $ log
   currentProgram $= Just prog
   attLocNormal <- get $ attribLocation prog "aNormal"
   return (prog, attLocNormal)
@@ -68,17 +70,12 @@ display :: ShaderLocations -> State -> IO ()
 display shaderLocs state = do
   clearColor $= Color4 0 0.2  0 0
   clear [ColorBuffer, DepthBuffer]
-  let a = angle state
-      tau = 2*pi
+  -- change solid and animation here
   renderSolid shaderLocs
-    . fmap (rot3dxz (tau/7) . rot3dxy (tau/9))
+    . fmap (rot3dyz (tau/9) . rot3dxz (tau/7))
     . intersectXYZ
-    . fmap (plus4d $ Vec4 0 0 0 (sqrt 3 * sin (a*0.76842)))
-    . fmap (rot4dyw (a*3) . rot4dxy (a*0.2) . rot4dzw (a*2.2))
-    $ hypercube
+    $ animation (angle state)
   flush
-
-myCube = intersectXYZ hypercube
 
 vertexAttrib3' :: AttribLocation -> Vec3 GLfloat -> IO ()
 vertexAttrib3' loc (Vec3 x y z) = vertexAttrib3 loc x y z
@@ -96,7 +93,7 @@ renderSolid shaderLocs solid = renderPrimitive Triangles $
 
 idle :: IORef State -> IO ()
 idle ref = do
-  threadDelay 30000
+  threadDelay 100000
   st <- get ref
   ref $= step st
   threadDelay $ 10^4
@@ -104,4 +101,4 @@ idle ref = do
   postRedisplay Nothing
 
 step :: State -> State
-step s = State (angle s + 0.03)
+step s = State (angle s + 0.05)
