@@ -94,3 +94,8 @@ rot4dyw a (Vec4 x y z w) = Vec4 x y' z w'
 rot4dzw :: (Floating a) => a -> Vec4 a -> Vec4 a
 rot4dzw a (Vec4 x y z w) = Vec4 x y z' w'
   where (z', w') = rot a (z, w)
+
+tetrahedronVolume :: (Floating a) =>
+  Vec3 a -> Vec3 a -> Vec3 a -> Vec3 a -> a
+tetrahedronVolume a b c d = (/6) . abs $
+  (liftA2 (-) a b `cross` liftA2 (-) a c) `dot3d` liftA2 (-) a d

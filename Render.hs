@@ -7,6 +7,7 @@ import qualified Data.Set as Set
 import qualified Data.IntMap as IMap
 import qualified Data.Map.Strict as Map
 import Data.List (mapAccumL)
+import Data.Maybe (isJust)
 
 import Solids
 import Vectors
@@ -38,27 +39,39 @@ boundingTrianglesSequence =
 
 esSequence :: forall a. (Floating a, Ord a) =>
   Solid (Vec3 a) -> [ElaborateSolid (Vec3 a) (Vec3 a, a)]
-esSequence = esSequence' mkPlane planeTest
+esSequence = esSequence' innerPoint mkPlane planeTest
   where
     mkPlane (a, b, c) =
       let normal = planeNormal a b c
       in (normal, normal `dot3d` a)
     planeTest :: (Vec3 a, a) -> Vec3 a -> Bool
     planeTest (normal, value) a = normal `dot3d` a <= value
+    innerPoint (a, b, c, d) =
+      if tetrahedronVolume a b c d > 0
+      then Just $ (1/4) `smult3d` foldl1 plus3d [a, b, c, d]
+      else Nothing
 
-esSequence' :: ((p, p, p) -> plane) -> (plane -> p -> Bool)
+esSequence' :: ((p, p, p, p) -> Maybe p)
+  -> ((p, p, p) -> plane) -> (plane -> p -> Bool)
   -> Solid p -> [ElaborateSolid p plane]
-esSequence' mkPlane planeTest (Solid allPoints) =
+esSequence' innerPoint mkPlane planeTest (Solid allPoints) =
   myIterate
     (addPoint mkPlane planeTest)
-    (initialES mkPlane planeTest a b c d)
+    (initialES mkPlane planeTest centerPoint a b c d)
     ps
   where
-    a:b:c:d:ps = allPoints
+    ([a, b, c, d], ps) = findQuadrupel
+      (\[a, b, c, d] -> isJust (innerPoint (a, b, c, d)))
+      allPoints
+    Just centerPoint = innerPoint (a, b, c, d)
     elaborateSolid = foldl
       (addPoint mkPlane planeTest)
-      (initialES mkPlane planeTest a b c d)
+      (initialES mkPlane planeTest centerPoint a b c d)
       ps
+
+findQuadrupel :: ([p] -> Bool)
+  -> [p] -> ([p], [p])
+findQuadrupel t = head . filter (t . fst) . choose' 4
 
 myIterate :: (a -> b -> a) -> a -> [b] -> [a]
 myIterate f a [] = [a]
@@ -70,25 +83,13 @@ extractTriangles es =
   . Map.keys . faces
   $ es
 
--- delete this?
-boundingTriangles' :: ((p, p, p) -> plane) -> (plane -> p -> Bool)
-  -> Solid p -> [(p, p, p)]
-boundingTriangles' mkPlane planeTest (Solid allPoints) =
-  map (toTriple . map (vertices elaborateSolid IMap.!) . faceIdToList)
-  . Map.keys . faces
-  $ elaborateSolid
-  where
-    a:b:c:d:ps = allPoints
-    elaborateSolid = foldl
-      (addPoint mkPlane planeTest)
-      (initialES mkPlane planeTest a b c d)
-      ps
 
 -- a 3d solid with a triangulation of the surface
 data ElaborateSolid p plane = ElaborateSolid
   { vertices :: IMap.IntMap p
   , faces :: Map.Map FaceId (FaceData plane)
   , nextVertId :: VertId
+  , center :: p
   }
 
 type VertId = IMap.Key
@@ -134,9 +135,9 @@ toTriple _ = error "toTriple: not a length 3 list"
 fromPair :: (a, a) -> [a]
 fromPair (a, b) = [a, b]
 
-initialES :: ((p, p, p) -> plane) -> (plane -> p -> Bool)
+initialES :: ((p, p, p) -> plane) -> (plane -> p -> Bool) -> p
   -> p -> p -> p -> p -> ElaborateSolid p plane
-initialES mkPlane planeTest a0 b0 c0 d0 = ElaborateSolid
+initialES mkPlane planeTest centerPoint a0 b0 c0 d0 = ElaborateSolid
   { vertices = verts
   , faces = Map.fromList
       . map ( \ ([a, b, c], [d]) ->
@@ -145,6 +146,7 @@ initialES mkPlane planeTest a0 b0 c0 d0 = ElaborateSolid
         )
       $ choose' 3 vertIds
   , nextVertId = length vertIds
+  , center = centerPoint
   }
   where
     verts = IMap.fromList $ zip vertIds [a0, b0, c0, d0]
@@ -154,7 +156,11 @@ addPoint :: forall p plane.
   ((p, p, p) -> plane) -> (plane -> p -> Bool)
   -> ElaborateSolid p plane -> p -> ElaborateSolid p plane
 addPoint mkPlane planeTest oldSolid newPoint =
-  ElaborateSolid newVerts newFaces (nextVertId oldSolid +1)
+  ElaborateSolid
+    newVerts
+    newFaces
+    (nextVertId oldSolid +1)
+    (center oldSolid)
   where
     lookupVert :: VertId -> p
     lookupVert k
@@ -181,22 +187,19 @@ addPoint mkPlane planeTest oldSolid newPoint =
     (keepFaces, dropFaces) = Map.partition
       (\(pl, inside) -> planeTest pl newPoint == inside)
       (faces oldSolid)
-    criticalEdges :: Map.Map EdgeId VertId
-    criticalEdges = Map.filterWithKey
-      (\k v -> Set.member k positiveCriticalEdges)
-      (Map.fromList . concatMap faceToEdges' . Map.keys $ dropFaces)
-    positiveCriticalEdges :: Set.Set EdgeId
-    positiveCriticalEdges = Set.fromList . concatMap faceToEdges
-      $ Map.keys keepFaces
---    edgesOfFaces :: Map.Map FaceId a -> Set.Set EdgeId
---    edgesOfFaces = Set.fromList . concatMap faceToEdges . Map.keys
+    criticalEdges :: Set.Set EdgeId
+    criticalEdges = Set.intersection
+      (edgesOfFaces keepFaces)
+      (edgesOfFaces dropFaces)
+    edgesOfFaces :: Map.Map FaceId a -> Set.Set EdgeId
+    edgesOfFaces = Set.fromList . concatMap faceToEdges . Map.keys
     newFaces :: Map.Map FaceId (FaceData plane)
     newFaces = Map.union keepFaces . Map.fromList
-      . map (\((EdgeIdRaw a b), othervert) ->
+      . map (\(EdgeIdRaw a b) ->
           ( mkFaceId a b newVertId
           , let pl = mkPlane
                   ( oldVerts IMap.! a
                   , oldVerts IMap.! b
                   , newPoint )
-            in (pl, planeTest pl (oldVerts IMap.! othervert))))
-      . Map.toList $ criticalEdges
+            in (pl, planeTest pl (center oldSolid))))
+      . Set.toList $ criticalEdges
