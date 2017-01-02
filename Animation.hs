@@ -6,11 +6,13 @@ import Construction
 
 
 animation :: (Floating a) => a -> Solid (Vec4 a)
-animation a =
---    movingInW a
---    crazyRotation a
---    fmap (rot4dxy a)
-  hypercube
+animation t =
+    movingInW t
+  . crazyRotation t
+--  . tiltZ
+--  . tiltY
+--  . tiltX
+  $ hypercube
 
 
 tau :: (Floating a) => a
@@ -21,8 +23,8 @@ crazyRotation a =
   fmap (rot4dyw (a*3) . rot4dxy (a*0.2) . rot4dzw (a*2.2))
 
 movingInW :: (Floating a) => a -> Solid (Vec4 a) -> Solid (Vec4 a)
-movingInW a = 
-  fmap $ plus4d $ Vec4 0 0 0 (sqrt 4 * cos (a*0.76842))
+movingInW t =
+  fmap $ plus4d $ Vec4 0 0 0 (2.0 * sin (t*0.362))
 
 tiltX :: (Floating a) => Solid (Vec4 a) -> Solid (Vec4 a)
 tiltX = fmap $ rot4dxw (atan (1/ sqrt 1))

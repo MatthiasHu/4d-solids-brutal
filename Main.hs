@@ -26,7 +26,10 @@ initialState = State
   { time = 0
   , angleXZ = tau/9
   , angleYZ = tau/7
-  , solids = boundingTrianglesSequence $ intersectXYZ hypercube
+  , solids = boundingTrianglesSequence
+    . intersectXYZ
+    . fmap (rot4dyw (tau*2/17) . rot4dxw (tau/9))
+    $ hypercube
   }
 
 data ShaderLocations = ShaderLocations
@@ -91,14 +94,13 @@ display :: ShaderLocations -> State -> IO ()
 display shaderLocs s = do
   clearColor $= Color4 0 0.2  0 0
   clear [ColorBuffer, DepthBuffer]
-  renderTriangles shaderLocs
-    . map (mapTriangle $ rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
-    $ head (solids s)
---  renderSolid shaderLocs
---    . fmap (rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
---    $ cube
---    . intersectXYZ
---    $ animation (angle state)
+--  renderTriangles shaderLocs
+--    . map (mapTriangle $ rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
+--    $ head (solids s)
+  renderSolid shaderLocs
+    . fmap (rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
+    . intersectXYZ
+    $ animation (time s)
   flush
 
 mapTriangle :: (a -> b) -> (a, a, a) -> (b, b, b)
@@ -114,7 +116,7 @@ renderSolid shaderLocs =
 renderTriangles :: ShaderLocations ->
   [(Vec3 GLfloat, Vec3 GLfloat, Vec3 GLfloat)] -> IO ()
 renderTriangles shaderLocs tris =
-  (trace $ "rendering " ++ show (length tris) ++ "triangles")
+  (trace $ "rendering " ++ show (length tris) ++ " triangles")
   . renderPrimitive Triangles . mapM_ renderTriangle $ tris
   where
     renderTriangle :: (Vec3 GLfloat, Vec3 GLfloat, Vec3 GLfloat) -> IO ()
@@ -126,8 +128,8 @@ renderTriangles shaderLocs tris =
 
 idle :: IORef State -> IO ()
 idle ref = do
-  threadDelay 100000
+  threadDelay 30000
   modifyState ref step
 
 step :: State -> State
-step s = s {time = time s + 0.05}
+step s = s {time = time s + 0.02}
