@@ -47,7 +47,7 @@ esSequence = esSequence' innerPoint mkPlane planeTest
     planeTest :: (Vec3 a, a) -> Vec3 a -> Bool
     planeTest (normal, value) a = normal `dot3d` a <= value
     innerPoint (a, b, c, d) =
-      if tetrahedronVolume a b c d > 0
+      if tetrahedronVolume a b c d > 10**(-5)
       then Just $ (1/4) `smult3d` foldl1 plus3d [a, b, c, d]
       else Nothing
 
