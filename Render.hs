@@ -6,8 +6,8 @@ import qualified Data.IntSet as ISet
 import qualified Data.Set as Set
 import qualified Data.IntMap as IMap
 import qualified Data.Map.Strict as Map
-import Data.List (mapAccumL)
-import Data.Maybe (isJust)
+import Data.List (find)
+import Data.Maybe (isJust, fromJust)
 
 import Solids
 import Vectors
@@ -55,23 +55,22 @@ esSequence' :: ((p, p, p, p) -> Maybe p)
   -> ((p, p, p) -> plane) -> (plane -> p -> Bool)
   -> Solid p -> [ElaborateSolid p plane]
 esSequence' innerPoint mkPlane planeTest (Solid allPoints) =
-  myIterate
-    (addPoint mkPlane planeTest)
-    (initialES mkPlane planeTest centerPoint a b c d)
-    ps
+  case mStartPoints of
+    Nothing -> [emptyES]
+    Just ([a, b, c, d], ps) ->
+      myIterate
+        (addPoint mkPlane planeTest)
+        (initialES mkPlane planeTest
+           (fromJust $ innerPoint (a, b, c, d)) a b c d)
+        ps
   where
-    ([a, b, c, d], ps) = findQuadrupel
+    mStartPoints = findQuadruple
       (\[a, b, c, d] -> isJust (innerPoint (a, b, c, d)))
       allPoints
-    Just centerPoint = innerPoint (a, b, c, d)
-    elaborateSolid = foldl
-      (addPoint mkPlane planeTest)
-      (initialES mkPlane planeTest centerPoint a b c d)
-      ps
 
-findQuadrupel :: ([p] -> Bool)
-  -> [p] -> ([p], [p])
-findQuadrupel t = head . filter (t . fst) . choose' 4
+findQuadruple :: ([p] -> Bool)
+  -> [p] -> Maybe ([p], [p])
+findQuadruple t = find (t . fst) . choose' 4
 
 myIterate :: (a -> b -> a) -> a -> [b] -> [a]
 myIterate f a [] = [a]
@@ -134,6 +133,9 @@ toTriple _ = error "toTriple: not a length 3 list"
 
 fromPair :: (a, a) -> [a]
 fromPair (a, b) = [a, b]
+
+emptyES :: ElaborateSolid p plane
+emptyES = ElaborateSolid IMap.empty Map.empty 0 undefined
 
 initialES :: ((p, p, p) -> plane) -> (plane -> p -> Bool) -> p
   -> p -> p -> p -> p -> ElaborateSolid p plane
