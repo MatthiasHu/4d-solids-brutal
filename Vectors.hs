@@ -19,17 +19,19 @@ instance Applicative Vec4 where
   
 
 fromList3d :: [a] -> Vec3 a
-fromList3d (x:y:z:_) = Vec3 x y z
+fromList3d [x, y, z] = Vec3 x y z
+fromList3d _ = error "not a length 3 list"
 
 fromList4d :: [a] -> Vec4 a
-fromList4d (x:y:z:w:_) = Vec4 x y z w
+fromList4d [x, y, z, w] = Vec4 x y z w
+fromList4d _ = error "not a length 4 list"
 
 
 coord4dw :: Vec4 a -> a
-coord4dw (Vec4 x y z w) = w
+coord4dw (Vec4 _ _ _ w) = w
 
 coord4dxyz :: Vec4 a -> Vec3 a
-coord4dxyz (Vec4 x y z w) = Vec3 x y z
+coord4dxyz (Vec4 x y z _) = Vec3 x y z
 
 plus3d :: (Num a) => Vec3 a -> Vec3 a -> Vec3 a
 plus3d = liftA2 (+)

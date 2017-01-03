@@ -2,7 +2,6 @@
 import Graphics.UI.GLUT
 import Data.IORef
 import Control.Concurrent (threadDelay)
-import Control.Monad
 import qualified Data.ByteString as BS
 import Debug.Trace
 
@@ -22,6 +21,7 @@ data State = State
   , solids :: [[(Vec3 GLfloat, Vec3 GLfloat, Vec3 GLfloat)]]
   }
 
+initialState :: State
 initialState = State
   { time = 0
   , angleXZ = tau/9
@@ -37,6 +37,7 @@ data ShaderLocations = ShaderLocations
   }
 
 
+main :: IO ()
 main = do
   shaderLocations <- glSetup
   stateRef <- newIORef initialState
@@ -48,19 +49,19 @@ main = do
 
 glSetup :: IO ShaderLocations
 glSetup = do
-  getArgsAndInitialize
+  _ <- getArgsAndInitialize
   initialWindowSize $= Size 500 500
-  createWindow "4d solids"
+  _ <- createWindow "4d solids"
   windowPosition $= Position 0 0
   depthFunc $= Just Lequal
   vertShaderSource <- BS.readFile "vertshader.sl"
   fragShaderSource <- BS.readFile "fragshader.sl"
-  (prog, attLocNormal) <-
+  attLocNormal <-
     setupShaderProgram vertShaderSource fragShaderSource
   return $ ShaderLocations attLocNormal
 
 setupShaderProgram ::
-  BS.ByteString -> BS.ByteString -> IO (Program, AttribLocation)
+  BS.ByteString -> BS.ByteString -> IO AttribLocation
 setupShaderProgram vertSource fragSource = do
   vertShader <- createShader VertexShader
   fragShader <- createShader FragmentShader
@@ -72,11 +73,11 @@ setupShaderProgram vertSource fragSource = do
   attachShader prog vertShader
   attachShader prog fragShader
   linkProgram prog
-  log <- programInfoLog prog
-  putStrLn $ log
+  infoLog <- programInfoLog prog
+  putStrLn $ infoLog
   currentProgram $= Just prog
   attLocNormal <- get $ attribLocation prog "aNormal"
-  return (prog, attLocNormal)
+  return attLocNormal
 
 keyboardInput :: IORef State -> KeyboardCallback
 keyboardInput ref c _ = modifyState ref $ keyboard c
