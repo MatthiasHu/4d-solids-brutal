@@ -35,3 +35,9 @@ tetraeder = fmap fromList3d $ crossPolytope 3
 
 cell16 :: (Num a) => Solid (Vec4 a)
 cell16 = fmap fromList4d $ crossPolytope 4
+
+hyperdiamond :: (Floating a) => Solid (Vec4 a)
+hyperdiamond = Solid . map normalize4d $ as ++ bs
+  where
+    Solid as = hypercube
+    Solid bs = cell16

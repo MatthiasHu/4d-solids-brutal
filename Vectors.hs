@@ -47,13 +47,20 @@ smult4d s = fmap (s*)
 
 norm3d :: (Floating a) => Vec3 a -> a
 norm3d v = sqrt $ dot3d v v
+norm4d :: (Floating a) => Vec4 a -> a
+norm4d v = sqrt $ dot4d v v
 
 normalize3d :: (Floating a) => Vec3 a -> Vec3 a
 normalize3d a = fmap (/norm3d a) a
+normalize4d :: (Floating a) => Vec4 a -> Vec4 a
+normalize4d a = fmap (/norm4d a) a
 
 dot3d :: (Num a) => Vec3 a -> Vec3 a -> a
 dot3d (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) =
   x1*x2 + y1*y2 + z1*z2
+dot4d :: (Num a) => Vec4 a -> Vec4 a -> a
+dot4d (Vec4 x1 y1 z1 w1) (Vec4 x2 y2 z2 w2) =
+  x1*x2 + y1*y2 + z1*z2 + w1*w2
 
 cross :: (Num a) => Vec3 a -> Vec3 a -> Vec3 a
 cross (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) =

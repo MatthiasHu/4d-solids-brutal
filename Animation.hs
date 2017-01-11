@@ -12,7 +12,7 @@ animation t =
 --  . tiltZ
 --  . tiltY
 --  . tiltX
-  $ cell16
+  $ hyperdiamond
 
 
 tau :: (Floating a) => a
