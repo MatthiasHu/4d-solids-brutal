@@ -30,8 +30,8 @@ hypercube = fmap fromList4d $ prism' . prism' . prism' . prism' $ point
 tesseract = hypercube
 cell8 = hypercube
 
-tetraeder :: (Num a) => Solid (Vec3 a)
-tetraeder = fmap fromList3d $ crossPolytope 3
+octahedron :: (Num a) => Solid (Vec3 a)
+octahedron = fmap fromList3d $ crossPolytope 3
 
 cell16 :: (Num a) => Solid (Vec4 a)
 cell16 = fmap fromList4d $ crossPolytope 4
