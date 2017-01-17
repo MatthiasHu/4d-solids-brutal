@@ -12,7 +12,7 @@ animation t =
 --  . tiltZ
 --  . tiltY
 --  . tiltX
-  $ hyperdiamond
+  $ simplex4
 
 
 tau :: (Floating a) => a

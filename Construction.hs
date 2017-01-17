@@ -21,6 +21,15 @@ crossPolytope n = Solid $
   ++ map (0:) ps
   where Solid ps = crossPolytope (n-1)
 
+simplex :: (Floating a) => Int -> Solid [a]
+simplex 0 = Solid [[]]
+simplex n = Solid $ tip : base
+  where
+    tip = (1: replicate (n-1) 0)
+    Solid base = fmap ((baselevel:) . map (*basescale)) $ simplex (n-1)
+    baselevel = -1 / fromIntegral n
+    basescale = sqrt (1-baselevel^2)
+
 
 cube :: (Num a) => Solid (Vec3 a)
 cube = fmap fromList3d $ prism' . prism' . prism' $ point
@@ -41,3 +50,11 @@ hyperdiamond = Solid . map normalize4d $ as ++ bs
   where
     Solid as = hypercube
     Solid bs = cell16
+
+simplex3, tetrahedron :: (Floating a) => Solid (Vec3 a)
+simplex3 = fmap fromList3d $ simplex 3
+tetrahedron = simplex3
+
+simplex4, cell5 :: (Floating a) => Solid (Vec4 a)
+simplex4 = fmap fromList4d $ simplex 4
+cell5 = simplex4
