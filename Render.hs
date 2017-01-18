@@ -12,6 +12,7 @@ import Data.Maybe (isJust, fromJust)
 
 import Solids
 import Vectors
+import Permutations
 import ElaborateSolid
 
 

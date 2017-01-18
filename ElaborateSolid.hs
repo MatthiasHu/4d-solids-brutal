@@ -2,8 +2,6 @@
 
 module ElaborateSolid
   ( ElaborateSolid()
-  , choose
-  , choose'
   , emptyES
   , tetrahedronES
   , addPoint
@@ -15,6 +13,8 @@ import qualified Data.IntSet as ISet
 import qualified Data.Set as Set
 import qualified Data.IntMap as IMap
 import qualified Data.Map.Strict as Map
+
+import Permutations
 
 
 -- a 3d solid with a triangulation of the surface
@@ -80,16 +80,6 @@ tetrahedronES mkPlane planeTest centerPoint a0 b0 c0 d0 = ElaborateSolid
   where
     verts = IMap.fromList $ zip vertIds [a0, b0, c0, d0]
     vertIds = [0..3]
-
-choose :: Int -> [a] -> [[a]]
-choose n l = map fst $ choose' n l
-
-choose' :: Int -> [a] -> [([a], [a])]
-choose' 0 xs = [([], xs)]
-choose' _ [] = []
-choose' n (x:xs) =
-  map (\(chosen, rest) -> (x:chosen, rest)) (choose' (n-1) xs)
-  ++ map (\(chosen, rest) -> (chosen, x:rest)) (choose' n xs)
 
 addPoint :: forall p plane.
   ((p, p, p) -> plane) -> (plane -> p -> Bool)
