@@ -93,14 +93,14 @@ modifyState ref f = modifyIORef ref f >> postRedisplay Nothing
 
 display :: ShaderLocations -> State -> IO ()
 display shaderLocs s = do
-  clearColor $= Color4 0 0.2  0 0
+  clearColor $= Color4 0 0.2 0.2 0
   clear [ColorBuffer, DepthBuffer]
 --  renderTriangles shaderLocs
 --    . map (mapTriangle $ rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
 --    $ head (solids s)
   renderSolid shaderLocs
     . fmap (rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
-    . intersectXYZ
+    . intersectXYZRegular
     $ animation (time s)
   flush
 

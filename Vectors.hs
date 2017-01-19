@@ -55,6 +55,10 @@ normalize3d a = fmap (/norm3d a) a
 normalize4d :: (Floating a) => Vec4 a -> Vec4 a
 normalize4d a = fmap (/norm4d a) a
 
+distSq4d :: (Num a) => Vec4 a -> Vec4 a -> a
+distSq4d a b = d `dot4d` d
+  where d = liftA2 (-) a b
+
 dot3d :: (Num a) => Vec3 a -> Vec3 a -> a
 dot3d (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) =
   x1*x2 + y1*y2 + z1*z2
