@@ -2,6 +2,7 @@ module Construction where
 
 import Solids
 import Vectors
+import Permutations
 
 
 point :: Solid [a]
@@ -45,11 +46,12 @@ octahedron = fmap fromList3d $ crossPolytope 3
 cell16 :: (Num a) => Solid (Vec4 a)
 cell16 = fmap fromList4d $ crossPolytope 4
 
-hyperdiamond :: (Floating a) => Solid (Vec4 a)
+hyperdiamond, cell24 :: (Floating a) => Solid (Vec4 a)
 hyperdiamond = Solid . map normalize4d $ as ++ bs
   where
     Solid as = hypercube
     Solid bs = cell16
+cell24 = hyperdiamond
 
 simplex3, tetrahedron :: (Floating a) => Solid (Vec3 a)
 simplex3 = fmap fromList3d $ simplex 3
@@ -58,3 +60,13 @@ tetrahedron = simplex3
 simplex4, cell5 :: (Floating a) => Solid (Vec4 a)
 simplex4 = fmap fromList4d $ simplex 4
 cell5 = simplex4
+
+cell600 :: (Floating a) => Solid (Vec4 a)
+cell600 = Solid $ as ++ bs
+  where
+    Solid as = hyperdiamond
+    bs = map fromList4d . concatMap evenPermutations $
+      [ [0.5* pm0 phi, 0.5* pm1 1, 0.5* pm2 (1/phi), 0]
+      | pm0 <- plusminus, pm1 <- plusminus, pm2 <- plusminus ]
+    plusminus = [id, \a -> -a]
+    phi = (1 + sqrt 5)/2

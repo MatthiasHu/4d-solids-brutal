@@ -23,7 +23,7 @@ data State = State
 
 initialState :: State
 initialState = State
-  { time = 0
+  { time = 0.001
   , angleXZ = tau/9
   , angleYZ = tau/7
   , solids = boundingTrianglesSequence

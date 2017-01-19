@@ -12,7 +12,7 @@ animation t =
 --  . tiltZ
 --  . tiltY
 --  . tiltX
-  $ simplex4
+  $ cell600
 
 
 tau :: (Floating a) => a
