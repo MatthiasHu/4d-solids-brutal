@@ -35,8 +35,9 @@ simplex n = Solid $ tip : base
 cube :: (Num a) => Solid (Vec3 a)
 cube = fmap fromList3d $ prism' . prism' . prism' $ point
 
-hypercube, tesseract, cell8 :: (Num a) => Solid (Vec4 a)
-hypercube = fmap fromList4d $ prism' . prism' . prism' . prism' $ point
+hypercube, tesseract, cell8 :: (Floating a) => Solid (Vec4 a)
+hypercube = fmap (normalize4d . fromList4d) $
+  prism' . prism' . prism' . prism' $ point
 tesseract = hypercube
 cell8 = hypercube
 
