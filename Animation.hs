@@ -5,14 +5,14 @@ import Solids
 import Construction
 
 
-animation :: (Floating a) => a -> Solid (Vec4 a)
+animation :: (Floating a, Eq a) => a -> Solid (Vec4 a)
 animation t =
     movingInW 1.0 t
   . crazyRotation t
 --  . tiltZ
 --  . tiltY
 --  . tiltX
-  $ cell600
+  $ cell120
 
 
 tau :: (Floating a) => a
