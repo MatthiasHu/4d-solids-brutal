@@ -16,6 +16,7 @@ import Construction
 
 data State = State
   { time :: GLfloat
+  , dt :: GLfloat
   , angleXZ :: GLfloat
   , angleYZ :: GLfloat
   , solids :: [[(Vec3 GLfloat, Vec3 GLfloat, Vec3 GLfloat)]]
@@ -24,6 +25,7 @@ data State = State
 initialState :: State
 initialState = State
   { time = 0.001
+  , dt = 0.02
   , angleXZ = tau/9
   , angleYZ = tau/7
   , solids = boundingTrianglesSequence
@@ -86,6 +88,8 @@ keyboard :: Char -> State -> State
 keyboard ' ' s  = s {solids = tail (solids s)}
 keyboard 'h' s  = s {angleXZ = angleXZ s +0.1}
 keyboard 'l' s  = s {angleXZ = angleXZ s -0.1}
+keyboard 'f' s  = s {dt = dt s * 2}
+keyboard 's' s  = s {dt = dt s * 0.5}
 keyboard _ s    = s
 
 modifyState :: IORef State -> (State -> State) -> IO ()
@@ -133,4 +137,4 @@ idle ref = do
   modifyState ref step
 
 step :: State -> State
-step s = s {time = time s + 0.02}
+step s = s {time = time s + dt s}
