@@ -6,3 +6,5 @@ module Solids where
 data Solid p = Solid [p]
   deriving (Show, Functor)
 
+data Edge p = Edge p p
+  deriving (Eq, Ord, Show, Functor)

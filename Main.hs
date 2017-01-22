@@ -104,9 +104,14 @@ display shaderLocs s = do
 --    $ head (solids s)
   renderSolid shaderLocs
     . fmap (rot3dyz (angleYZ s) . rot3dxz (angleXZ s))
-    . intersectXYZRegular
-    $ animation (time s)
+    . intersectXYZEdges
+    . (map . fmap) (animation $ time s)
+    $ objectEdges
   flush
+
+objectEdges :: [Edge (Vec4 GLfloat)]
+objectEdges = edges4dRegular object
+{-# NOINLINE objectEdges #-}
 
 mapTriangle :: (a -> b) -> (a, a, a) -> (b, b, b)
 mapTriangle f (x, y, z) = (f x, f y, f z)
